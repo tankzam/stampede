@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STAMPEDE - Wallet Rotation Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00d4ff;
+            --primary-dark: #0099cc;
+            --secondary: #ff6b6b;
+            --success: #51cf66;
+            --warning: #ffd93d;
+            --danger: #ff6b6b;
+            --dark: #1a1a2e;
+            --darker: #0f0f1e;
+            --light: #f5f5f5;
+            --border: #2a2a4e;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--darker);
+            color: #e0e0e0;
+            line-height: 1.5;
+            overflow: hidden;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--dark);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            height: 70px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-left h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-left .subtitle {
+            font-size: 0.85rem;
+            color: #999;
+            font-weight: 400;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: #999;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .nav-btn.active {
+            background: var(--primary);
+            color: var(--darker);
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status {
+            font-size: 0.85rem;
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .view-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            gap: 1rem;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .sidebar-left {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-right {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
+        }
+
+        .panel h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .panel h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .count, .time-label {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        /* Filters */
+        .filter-group, .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .filter-group label, .control-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #ccc;
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="range"],
+        select {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            background: var(--darker);
+            border: 1px solid var(--border);
+            color: #e0e0e0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        /* Buttons */
+        .btn-primary, .btn-secondary {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--darker);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: #ccc;
+        }
+
+        .btn-secondary:hover {
+            background: var(--darker);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Radar Grid */
+        .radar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .radar-card {
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .radar-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h4 {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .risk-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .risk-badge.safe {
+            background: rgba(81, 207, 102, 0.2);
+            color: var(--success);
+        }
+
+        .risk-badge.risky {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger);
+        }
+
+        .card-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .stat .label {
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .stat .value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .card-flags {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .flag {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--primary);
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        /* Flow & Map */
+        .flow-canvas, .map-canvas {
+            flex: 1;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            min-height: 400px;
+        }
+
+        .flow-placeholder, .map-placeholder {
+            color: #666;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .search-box {
+            margin-bottom: 1rem;
+        }
+
+        .recent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .label-small {
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .list-item {
+            padding: 0.5rem 1rem;
+            background: var(--darker);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #ccc;
+        }
+
+        .list-item:hover {
+            background: var(--border);
+            color: var(--primary);
+        }
+
+        .sequence-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .sequence-item {
+            background: var(--darker);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sequence-item:hover {
+            border-color: var(--primary);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .seq-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .pair {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .wallet-count {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .seq-details {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        /* Feed */
+        .feed-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .feed-item {
+            display: grid;
+            grid-template-columns: 50px 1fr 80px;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            background: var(--darker);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .feed-item .time {
+            color: #666;
+            font-size: 0.75rem;
+        }
+
+        .feed-item .event {
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        .feed-item .amount {
+            color: var(--success);
+            font-family: 'Courier New', monospace;
+            text-align: right;
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #999;
+            line-height: 1.6;
+        }
+
+        .mt-4 {
+            margin-top: 2rem;
+        }
+
+        .map-stats {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--darker);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3a5e;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .sidebar-right {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-left {
+                width: 100%;
+                max-height: 200px;
+                overflow-x: auto;
+                flex-direction: row;
+            }
+
+            .radar-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .view-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>STAMPEDE</h1>
+                <span class="subtitle">Wallet Rotation Explorer</span>
+            </div>
+            <div class="header-nav">
+                <button class="nav-btn active" onclick="switchView('radar')">📊 Radar</button>
+                <button class="nav-btn" onclick="switchView('flow')">🌊 Flow</button>
+                <button class="nav-btn" onclick="switchView('map')">🗺️ Map</button>
+            </div>
+            <div class="header-right">
+                <span class="status">● Connected</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- RADAR VIEW -->
+            <div id="radar-view" class="view-container" style="display: flex;">
+                <aside class="sidebar-left">
+                    <div class="panel">
+                        <h3>Filters</h3>
+                        <div class="filter-group">
+                            <label>Min Wallets</label>
+                            <input type="number" value="3" min="1" />
+                        </div>
+                        <div class="filter-group">
+                            <label>Time Window</label>
+                            <select>
+                                <option>5 min</option>
+                                <option selected>30 min</option>
+                                <option>2 hours</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Risk Level</label>
+                            <select>
+                                <option>Conservative</option>
+                                <option selected>Balanced</option>
+                                <option>Aggressive</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary">Apply Filters</button>
+                    </div>
+                    <div class="panel mt-4">
+                        <h3>ℹ️ About Radar</h3>
+                        <p class="help-text">Shows top tokens ranked by inflow, wallet activity, and market sentiment.</p>
+                    </div>
+                </aside>
+
+                <section class="main-panel">
+                    <div class="panel-header">
+                        <h2>Top Tokens</h2>
+                        <span class="count">24 tokens tracked</span>
+                    </div>
+                    <div class="radar-grid">
+                        <div class="radar-card">
+                            <div class="card-header">
+                                <h4>PUMP</h4>
+                                <span class="risk-badge safe">✓ Safe</span>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat"><span class="label">Inflow</span><span class="value">$2.4M</span></div>
+                                <div class="stat"><span class="label">Wallets</span><span class="value">1,234</span></div>
+                                <div class="stat"><span class="label">Age</span><span class="value">3 days</span></div>
+                            </div>
+                            <div class="card-flags">
+                                <span class="flag">Verified</span>
+                                <span class="flag">Audited</span>
+                            </div>
+                            <button class="btn-secondary">View Details</button>
+                        </div>
+
+                        <div class="radar-card">
+                            <div class="card-header">
+                                <h4>AI16Z</h4>
+                                <span class="risk-badge safe">✓ Safe</span>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat"><span class="label">Inflow</span><span class="value">$1.8M</span></div>
+                                <div class="stat"><span class="label">Wallets</span><span class="label">892</span></div>
+                                <div class="stat"><span class="label">Age</span><span class="value">5 days</span></div>
+                            </div>
+                            <div class="card-flags">
+                                <span class="flag">Verified</span>
+                            </div>
+                            <button class="btn-secondary">View Details</button>
+                        </div>
+
+                        <div class="radar-card">
+                            <div class="card-header">
+                                <h4>ORCA</h4>
+                                <span class="risk-badge risky">⚠ Risky</span>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat"><span class="label">Inflow</span><span class="value">$850K</span></div>
+                                <div class="stat"><span class="label">Wallets</span><span class="value">445</span></div>
+                                <div class="stat"><span class="label">Age</span><span class="value">2 hours</span></div>
+                            </div>
+                            <div class="card-flags">
+                                <span class="flag">New</span>
+                            </div>
+                            <button class="btn-secondary">View Details</button>
+                        </div>
+
+                        <div class="radar-card">
+                            <div class="card-header">
+                                <h4>WINCH</h4>
+                                <span class="risk-badge safe">✓ Safe</span>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat"><span class="label">Inflow</span><span class="value">$1.2M</span></div>
+                                <div class="stat"><span class="label">Wallets</span><span class="value">567</span></div>
+                                <div class="stat"><span class="label">Age</span><span class="value">7 days</span></div>
+                            </div>
+                            <div class="card-flags">
+                                <span class="flag">Verified</span>
+                            </div>
+                            <button class="btn-secondary">View Details</button>
+                        </div>
+
+                        <div class="radar-card">
+                            <div class="card-header">
+                                <h4>POPCAT</h4>
+                                <span class="risk-badge safe">✓ Safe</span>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat"><span class="label">Inflow</span><span class="value">$960K</span></div>
+                                <div class="stat"><span class="label">Wallets</span><span class="value">723</span></div>
+                                <div class="stat"><span class="label">Age</span><span class="value">4 days</span></div>
+                            </div>
+                            <div class="card-flags">
+                                <span class="flag">Audited</span>
+                            </div>
+                            <button class="btn-secondary">View Details</button>
+                        </div>
+
+                        <div class="radar-card">
+                            <div class="card-header">
+                                <h4>BONK</h4>
+                                <span class="risk-badge risky">⚠ Risky</span>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat"><span class="label">Inflow</span><span class="value">$340K</span></div>
+                                <div class="stat"><span class="label">Wallets</span><span class="value">234</span></div>
+                                <div class="stat"><span class="label">Age</span><span class="value">30 min</span></div>
+                            </div>
+                            <div class="card-flags">
+                                <span class="flag">Unverified</span>
+                            </div>
+                            <button class="btn-secondary">View Details</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- FLOW VIEW -->
+            <div id="flow-view" class="view-container" style="display: none;">
+                <aside class="sidebar-left">
+                    <div class="panel">
+                        <h3>Coin Selection</h3>
+                        <div class="search-box">
+                            <input type="text" placeholder="Search token..." />
+                        </div>
+                        <div class="recent-list">
+                            <p class="label-small">Recent</p>
+                            <div class="list-item">SOL</div>
+                            <div class="list-item">PUMP</div>
+                            <div class="list-item">AI16Z</div>
+                        </div>
+                    </div>
+                    <div class="panel mt-4">
+                        <h3>ℹ️ What is Flow?</h3>
+                        <p class="help-text">Shows how a single token connects to others through wallet rotations.</p>
+                    </div>
+                </aside>
+
+                <section class="main-panel">
+                    <div class="panel-header">
+                        <h2>Flow Diagram</h2>
+                    </div>
+                    <div class="flow-canvas">
+                        <div class="flow-placeholder">
+                            <span>Select a token to view flow</span>
+                        </div>
+                    </div>
+                    <div class="panel mt-4">
+                        <h3>Top Sequences</h3>
+                        <div class="sequence-list">
+                            <div class="sequence-item">
+                                <div class="seq-header">
+                                    <span class="pair">SOL → PUMP</span>
+                                    <span class="wallet-count">423 wallets</span>
+                                </div>
+                                <div class="seq-details">
+                                    <span>Avg Gap: 8 min</span>
+                                    <span>Grade: Clean</span>
+                                </div>
+                            </div>
+                            <div class="sequence-item">
+                                <div class="seq-header">
+                                    <span class="pair">SOL → AI16Z</span>
+                                    <span class="wallet-count">312 wallets</span>
+                                </div>
+                                <div class="seq-details">
+                                    <span>Avg Gap: 12 min</span>
+                                    <span>Grade: Direct</span>
+                                </div>
+                            </div>
+                            <div class="sequence-item">
+                                <div class="seq-header">
+                                    <span class="pair">SOL → ORCA</span>
+                                    <span class="wallet-count">156 wallets</span>
+                                </div>
+                                <div class="seq-details">
+                                    <span>Avg Gap: 15 min</span>
+                                    <span>Grade: Ambiguous</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- MAP VIEW -->
+            <div id="map-view" class="view-container" style="display: none;">
+                <aside class="sidebar-left">
+                    <div class="panel">
+                        <h3>Map Controls</h3>
+                        <div class="control-group">
+                            <label>Time Range</label>
+                            <input type="range" min="0" max="100" />
+                            <span class="time-label">Last 30 min</span>
+                        </div>
+                        <div class="control-group">
+                            <label>
+                                <input type="checkbox" checked /> Live Updates
+                            </label>
+                        </div>
+                        <div class="control-group">
+                            <label>
+                                <input type="checkbox" /> Show Ambiguous
+                            </label>
+                        </div>
+                    </div>
+                    <div class="panel mt-4">
+                        <h3>ℹ️ What is Map?</h3>
+                        <p class="help-text">3D network showing all token connections with real-time activity pulses.</p>
+                    </div>
+                </aside>
+
+                <section class="main-panel">
+                    <div class="panel-header">
+                        <h2>Network Map</h2>
+                        <div class="map-stats">
+                            <span>42 tokens</span>
+                            <span>156 edges</span>
+                            <span>2.4K wallets</span>
+                        </div>
+                    </div>
+                    <div class="map-canvas">
+                        <div class="map-placeholder">
+                            <span>🔄 3D Network Visualization (Coming Soon)</span>
+                        </div>
+                    </div>
+                </section>
+
+                <aside class="sidebar-right">
+                    <div class="panel">
+                        <h3>Activity Feed</h3>
+                        <div class="feed-list">
+                            <div class="feed-item">
+                                <span class="time">2 min</span>
+                                <span class="event">SOL → PUMP</span>
+                                <span class="amount">$12.3K</span>
+                            </div>
+                            <div class="feed-item">
+                                <span class="time">5 min</span>
+                                <span class="event">AI16Z → ORCA</span>
+                                <span class="amount">$8.7K</span>
+                            </div>
+                            <div class="feed-item">
+                                <span class="time">8 min</span>
+                                <span class="event">PUMP → WINCH</span>
+                                <span class="amount">$15.2K</span>
+                            </div>
+                            <div class="feed-item">
+                                <span class="time">12 min</span>
+                                <span class="event">ORCA → POPCAT</span>
+                                <span class="amount">$6.4K</span>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function switchView(view) {
+            // Hide all views
+            document.getElementById('radar-view').style.display = 'none';
+            document.getElementById('flow-view').style.display = 'none';
+            document.getElementById('map-view').style.display = 'none';
+
+            // Show selected view
+            document.getElementById(view + '-view').style.display = 'flex';
+
+            // Update active button
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
